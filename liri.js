@@ -1,90 +1,97 @@
-require('dotenv').config();
-var keys = require('./keys.js');
-var fs = require('fs');
-var request = require('request');
-var nodeSpotify = require("node-spotify-api");
-var moment = require("moment");
+// Configure dotenv package
+require('dotenv').config()
 
-// The first will be the action (i.e. "song", "movie", etc.)
-// The second will be the song, movie, etc selected.
+// Import keys.js file
+var keys = require('./keys.js')
+
+// Constants for require imports
+var fs = require('fs')
+var request = require('request')
+var moment = require('moment')
+var Spotify = require('node-spotify-api');
+
+
+var spotify = new Spotify(keys.spotify);
+
+
 var action = process.argv[2];
 var value = process.argv.slice(3).join(" ");
 
-// Then I would create a switch-case statement.
-// The switch-case will direct which function gets run.
-// switch (action) {
-// case "total":
-//   total();
-//   break;
 
-// case "deposit":
-//   deposit();
-//   break;
+switch (action) {
+    case "concert-this":
+    console.log("Let me find those concerts for you...")
+      concerts();
+      break;
+    
+    case "spotify-this-song":
+    console.log("Let me find that song for you...")
+      songs();
+      break;
+    
+    case "movie-this":
+    console.log("Let me find the information on that movie for you...")  
+      movies();
+      break;
+    
+    case "do-what-it-says":
+    console.log("Let me find that song for you...")
+      randomText();
+      break;
+}
 
-// case "withdraw":
-//   withdraw();
-//   break;
+function concerts() {
+request("https://rest.bandsintown.com/artists/" + value + "/events?app_id=codingbootcamp", function (err, res, body) {
+    
+    for (i = 0; i < body.length; i++) {
+    var concertInfo = JSON.parse(body)[i]
+    // console.log(concertInfo);
+    console.log("Venue: " + concertInfo.venue.name);
+    console.log("Location: " + concertInfo.venue.city + ", " + concertInfo.venue.region);
+    console.log(moment(concertInfo.datatime).format("LLLL"));
+    console.log("")
+    }
+})
 
-// case "lotto":
-//   lotto();
-//   break;
-// }
+}
 
+function songs() {
 
+    spotify.search({ type: 'track', query: value}, function(error, data) {
+        
+        // console.log(data.tracks.items[0]);
 
-// So at this point I would write out what happens when the functions are called in the switch-case statement, similar to activity 15.
+        var songInfo = data.tracks.items[0];
+        console.log("Artist: " + songInfo.artists[0].name);
+        console.log("Song Name: " + songInfo.name);    
+        console.log("Preview Link: " + songInfo.preview_url);
+        console.log("Album: " + songInfo.album.name);
+    })
+}
 
+function movies() {
 
+    request("http://www.omdbapi.com/?t=" + value + "&y=&plot=short&apikey=trilogy", function(err, res, body) {
 
-// function total() {
+        var movieInfo = JSON.parse(body)
 
-//   fs.readFile("bank.txt", "utf8", function(err, data) {
-//     if (err) {
-//       return console.log(err);
-//     }
+        // console.log(movieInfo);
+        console.log("Title: " + movieInfo.Title)
+        console.log("Year: " + movieInfo.Year)    
+        console.log("IMDB Rating: " + movieInfo.imdbRating)
+        console.log("Rotten Tomatoes Rating: " +movieInfo.Ratings[1].Value)
+        console.log("Language: " + movieInfo.Language)    
+        console.log("Actors: " + movieInfo.Actors)
+        console.log("Plot: " + movieInfo.Plot)
 
-//     data = data.split(", ");
-//     var result = 0;
+    })
 
-//     for (var i = 0; i < data.length; i++) {
-//       if (parseFloat(data[i])) {
-//         result += parseFloat(data[i]);
-//       }
-//     }
+}
 
-//     console.log("You have a total of " + result.toFixed(2));
-//   });
-// }
-
-// function deposit() {
-
-//   fs.appendFile("bank.txt", ", " + value, function(err) {
-//     if (err) {
-//       return console.log(err);
-//     }
-//   });
-
-//   console.log("Deposited " + value + ".");
-// }
-
-// function withdraw() {
-
-//   fs.appendFile("bank.txt", ", -" + value, function(err) {
-//     if (err) {
-//       return console.log(err);
-//     }
-//   });
-
-//   console.log("Withdrew " + value + ".");
-// }
-
-
-// function lotto() {
-
-//   fs.appendFile("bank.txt", ", -.25", function(err) {
-//     if (err) {
-//       return console.log(err);
-//     }
-//   });
-
-// }
+function randomText() {
+    fs.readFile("random.txt", "utf8", function(err, data) {
+        var random =data.split(",")
+        console.log(random)
+    })
+    
+}
